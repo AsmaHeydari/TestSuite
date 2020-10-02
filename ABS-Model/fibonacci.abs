@@ -1,0 +1,206 @@
+module TestModule;
+
+
+
+data Val = IntVal(Int intVal)| PtrVal(Ptr ptrVal);
+
+data Ptr = NullPtr| Ptr(Loc loc);
+
+data Loc = Loc(Mem mem, Int offset);
+
+interface Mem {
+        Val getVal(Int offset);
+        Unit setVal(Int offset, Val newVal);
+}
+
+def List<A> replace<A>(List<A> l, Int i, A a) = 
+        if ( i == 0 ) then Cons( a, tail(l) ) else Cons( head(l), replace(tail(l), ( i - 1 ), a) );
+
+class Mem(List<Val> vals) implements Mem {
+        
+        
+        Val getVal(Int offset){
+                return nth(this.vals, offset);
+        }
+        Unit setVal(Int offset, Val newVal){
+                this.vals = replace(this.vals, offset, newVal);
+        }
+        }
+
+interface Function_fibonacci {
+        Val call();
+}
+
+class Function_fibonacci(List<Loc> globalVars, List<Loc> params) implements Function_fibonacci {
+        List<Loc> localVars = Nil;
+        
+        Val call(){
+                Bool returnFlag = False;
+                Val result = IntVal( 0 );
+                {
+                        Fut<Val> tmp_1 = this!getVal_val(nth(this.params, 0));
+                        Fut<Val> tmp_2 = this!cmp_le_int_fut_val(tmp_1, 1);
+                        await tmp_2?;
+                        Val tmp_13 = tmp_2.get;
+                        if ( ( intVal(tmp_13) != 0 ) ){
+                                result = IntVal( 1 );
+                                returnFlag = True;
+                        } else {
+                                Fut<Val> tmp_3 = this!getVal_val(nth(this.params, 0));
+                                Fut<Val> tmp_4 = this!op_minus_fut_val(tmp_3, 1);
+                                Fut<Val> tmp_5 = this!call_fibonacci_fut_0(tmp_4);
+                                Fut<Val> tmp_6 = this!getVal_val(nth(this.params, 0));
+                                Fut<Val> tmp_7 = this!op_minus_fut_val(tmp_6, 2);
+                                Fut<Val> tmp_8 = this!call_fibonacci_fut_0(tmp_7);
+                                Fut<Val> tmp_9 = this!op_plus_fut_fut(tmp_5, tmp_8);
+                                await tmp_9?;
+                                result = tmp_9.get;
+                                returnFlag = True;
+                        }
+                }
+                return result;
+        }
+        Val cmp_le_int_fut_val(Fut<Val> fut_arg1, Int arg2){
+                await fut_arg1?;
+                Val arg1 = fut_arg1.get;
+                return IntVal( if ( arg1 <= IntVal( arg2 ) ) then 1 else 0 );
+        }
+        Val op_plus_fut_fut(Fut<Val> fut_arg1, Fut<Val> fut_arg2){
+                await fut_arg1? & fut_arg2?;
+                Val arg1 = fut_arg1.get;
+                Val arg2 = fut_arg2.get;
+                return IntVal( ( intVal(arg1) + intVal(arg2) ) );
+        }
+        Val getVal_val(Loc loc){
+                Fut<Val> futureResult = mem(loc)!getVal(offset(loc));
+                Val result = futureResult.get;
+                return result;
+        }
+        Val op_minus_fut_val(Fut<Val> fut_arg1, Int arg2){
+                await fut_arg1?;
+                Val arg1 = fut_arg1.get;
+                return IntVal( ( intVal(arg1) - arg2 ) );
+        }
+        Val call_fibonacci_fut_0(Fut<Val> fut_arg1){
+                await fut_arg1?;
+                Val arg1 = fut_arg1.get;
+                List<Loc> params = Nil;
+                Mem mem_0 = new Mem(copy(arg1, 1));
+                params = appendright(params, Loc( mem_0, 0 ));
+                Function_fibonacci tmp_10 = new Function_fibonacci(this.globalVars, params);
+                Fut<Val> tmp_11 = tmp_10!call();
+                Val tmp_12 = tmp_11.get;
+                return tmp_12;
+        }
+        }
+
+interface Function_main {
+        Val call();
+}
+
+class Function_main(List<Loc> globalVars, List<Loc> params) implements Function_main {
+        List<Loc> localVars = Nil;
+        
+        Val call(){
+                Mem mem_0 = new Mem(copy(IntVal( 0 ), 1));
+                this.localVars = appendright(this.localVars, Loc( mem_0, 0 ));
+                Bool returnFlag = False;
+                Val result = IntVal( 0 );
+                {
+                        Fut<Val> tmp_14 = this!getVal_val(nth(this.localVars, 0));
+                        Fut<Val> tmp_15 = this!cmp_le_int_fut_val(tmp_14, ( 10 - 1 ));
+                        await tmp_15?;
+                        Val tmp_29 = tmp_15.get;
+                        while (( intVal(tmp_29) != 0 )) {
+                                Fut<Val> tmp_19 = this!getVal_val(nth(this.localVars, 0));
+                                Fut<Loc> tmp_20 = this!subscript_val_fut(nth(this.globalVars, 0), 1, tmp_19);
+                                Fut<Val> tmp_22 = this!getVal_val(nth(this.localVars, 0));
+                                Fut<Val> tmp_23 = this!op_plus_fut_val(tmp_22, 2);
+                                Fut<Val> tmp_24 = this!call_fibonacci_fut_0(tmp_23);
+                                Fut<Unit> tmp_25 = this!setVal_fut_fut(tmp_20, tmp_24);
+                                await tmp_24? & tmp_25?;
+                                Fut<Val> tmp_16 = this!getVal_val(nth(this.localVars, 0));
+                                Fut<Val> tmp_17 = this!op_plus_fut_val(tmp_16, 1);
+                                Fut<Unit> tmp_18 = this!setVal_val_fut(nth(this.localVars, 0), tmp_17);
+                                await tmp_16? & tmp_18?;
+                                tmp_14 = this!getVal_val(nth(this.localVars, 0));
+                                tmp_15 = this!cmp_le_int_fut_val(tmp_14, ( 10 - 1 ));
+                                await tmp_15?;
+                                tmp_29 = tmp_15.get;
+                        }
+                        Fut<Val> tmp_30 = this!getVal_val(Loc( mem(nth(this.globalVars, 0)), ( offset(nth(this.globalVars, 0)) + ( 1 * 6 ) ) ));
+                        await tmp_30?;
+                        result = tmp_30.get;
+                        returnFlag = True;
+                }
+                return result;
+        }
+        Val cmp_le_int_fut_val(Fut<Val> fut_arg1, Int arg2){
+                await fut_arg1?;
+                Val arg1 = fut_arg1.get;
+                return IntVal( if ( arg1 <= IntVal( arg2 ) ) then 1 else 0 );
+        }
+        Unit setVal_fut_fut(Fut<Loc> fut_loc, Fut<Val> fut_value){
+                await fut_loc? & fut_value?;
+                Loc loc = fut_loc.get;
+                Val value = fut_value.get;
+                Fut<Unit> se = mem(loc)!setVal(offset(loc), value);
+                se.get;
+        }
+        Loc subscript_val_fut(Loc loc, Int size, Fut<Val> fut_index){
+                await fut_index?;
+                Val index = fut_index.get;
+                return Loc( mem(loc), ( offset(loc) + ( size * intVal(index) ) ) );
+        }
+        Unit setVal_val_fut(Loc loc, Fut<Val> fut_value){
+                await fut_value?;
+                Val value = fut_value.get;
+                Fut<Unit> se = mem(loc)!setVal(offset(loc), value);
+                se.get;
+        }
+        Val getVal_val(Loc loc){
+                Fut<Val> futureResult = mem(loc)!getVal(offset(loc));
+                Val result = futureResult.get;
+                return result;
+        }
+        Val call_fibonacci_fut_0(Fut<Val> fut_arg1){
+                await fut_arg1?;
+                Val arg1 = fut_arg1.get;
+                List<Loc> params = Nil;
+                Mem mem_0 = new Mem(copy(arg1, 1));
+                params = appendright(params, Loc( mem_0, 0 ));
+                Function_fibonacci tmp_26 = new Function_fibonacci(this.globalVars, params);
+                Fut<Val> tmp_27 = tmp_26!call();
+                Val tmp_28 = tmp_27.get;
+                return tmp_28;
+        }
+        Val op_plus_fut_val(Fut<Val> fut_arg1, Int arg2){
+                await fut_arg1?;
+                Val arg1 = fut_arg1.get;
+                return IntVal( ( intVal(arg1) + arg2 ) );
+        }
+        }
+
+interface InitI {
+        Unit initM();
+}
+
+class InitC(List<Loc> globalVars) implements InitI {
+        
+        
+        Unit initM(){
+                Mem mem_0 = new Mem(copy(IntVal( 0 ), ( 10 * 1 )));
+                this.globalVars = appendright(this.globalVars, Loc( mem_0, 0 ));
+                Function_main main = new Function_main(this.globalVars, Nil);
+                Fut<Val> fv = main!call();
+                Val v = fv.get;
+                println(toString(intVal(v)));
+        }
+        }
+
+
+{
+        InitI initO = new InitC(Nil);
+        Fut<Unit> futureResult = initO!initM();
+        await futureResult?;
+}
